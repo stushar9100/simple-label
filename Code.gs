@@ -61,17 +61,17 @@ function createLabelsDoc(options) {
   if (table.getNumRows() > 0) {
     table.removeRow(0);
   }
+  table.setAttributes({
+    [DocumentApp.Attribute.BORDER_COLOR]: '#bdbdbd',
+    [DocumentApp.Attribute.BORDER_WIDTH]: 1,
+    [DocumentApp.Attribute.BORDER_STYLE]: 'DOTTED'
+  });
 
   function styleLabelCell(cell) {
     cell.setPaddingTop(labelPadding);
     cell.setPaddingBottom(labelPadding);
     cell.setPaddingLeft(labelPadding);
     cell.setPaddingRight(labelPadding);
-    var attributes = {};
-    attributes[DocumentApp.Attribute.BORDER_COLOR] = '#bdbdbd';
-    attributes[DocumentApp.Attribute.BORDER_WIDTH] = 1;
-    attributes[DocumentApp.Attribute.BORDER_STYLE] = 'DOTTED';
-    cell.setAttributes(attributes);
   }
 
   function styleSpacerCell(cell) {
@@ -79,10 +79,6 @@ function createLabelsDoc(options) {
     cell.setPaddingBottom(0);
     cell.setPaddingLeft(0);
     cell.setPaddingRight(0);
-    cell.setAttributes({
-      [DocumentApp.Attribute.BORDER_WIDTH]: 0,
-      [DocumentApp.Attribute.BORDER_COLOR]: '#ffffff'
-    });
     cell.clear();
     if (labelSpacing > 0) {
       cell.setWidth(labelSpacing);
