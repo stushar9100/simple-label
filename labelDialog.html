@@ -138,12 +138,14 @@
 
     <div class="section">
       <strong>3. Create labels</strong>
-      <p class="placeholder">The create action will be wired up in the next phase.</p>
+      <div id="create-result" class="placeholder">
+        Select fields above, then click Create to build a labels document.
+      </div>
     </div>
 
     <div class="actions">
       <button class="secondary" onclick="google.script.host.close()">Close</button>
-      <button disabled>Create</button>
+      <button id="create-button" disabled>Create</button>
     </div>
 
     <script>
@@ -160,6 +162,8 @@
       const columnsLoading = document.getElementById('columns-loading');
       const orderList = document.getElementById('order-list');
       const preview = document.getElementById('preview');
+      const createButton = document.getElementById('create-button');
+      const createResult = document.getElementById('create-result');
       const lineBreaksInput = document.getElementById('line-breaks');
       const textSizeInput = document.getElementById('text-size');
       const lineSpacingInput = document.getElementById('line-spacing');
@@ -196,6 +200,7 @@
         }
         renderOrder();
         renderPreview();
+        updateCreateButton();
       }
 
       function moveOrder(index, direction) {
@@ -276,6 +281,34 @@
         renderPreview();
       }
 
+      function updateCreateButton() {
+        createButton.disabled = state.order.length === 0;
+      }
+
+      function buildLabelsDoc() {
+        if (state.order.length === 0) {
+          createResult.textContent = 'Select at least one field to create labels.';
+          return;
+        }
+        createButton.disabled = true;
+        createResult.textContent = 'Creating your labels document…';
+        google.script.run
+          .withSuccessHandler((url) => {
+            createResult.innerHTML = `Labels document created: <a href="${url}" target="_blank" rel="noopener">Open document</a>`;
+            updateCreateButton();
+          })
+          .withFailureHandler((error) => {
+            createResult.textContent = error && error.message ? error.message : 'Unable to create labels.';
+            updateCreateButton();
+          })
+          .createLabelsDoc({
+            order: state.order,
+            lineBreaks: state.lineBreaks,
+            textSize: state.textSize,
+            lineSpacing: state.lineSpacing,
+          });
+      }
+
       function loadHeaders() {
         google.script.run
           .withSuccessHandler((headers) => {
@@ -284,6 +317,7 @@
             renderColumns();
             renderOrder();
             renderPreview();
+            updateCreateButton();
           })
           .withFailureHandler(() => {
             columnsLoading.textContent = 'Unable to load headers.';
@@ -294,6 +328,7 @@
       lineBreaksInput.addEventListener('change', applyLayoutControls);
       textSizeInput.addEventListener('input', applyLayoutControls);
       lineSpacingInput.addEventListener('input', applyLayoutControls);
+      createButton.addEventListener('click', buildLabelsDoc);
 
       loadHeaders();
     </script>
