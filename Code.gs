@@ -70,7 +70,7 @@ function createLabelsDoc(options) {
     var attributes = {};
     attributes[DocumentApp.Attribute.BORDER_COLOR] = '#bdbdbd';
     attributes[DocumentApp.Attribute.BORDER_WIDTH] = 1;
-    attributes[DocumentApp.Attribute.BORDER_STYLE] = DocumentApp.BorderStyle.DOTTED;
+    attributes[DocumentApp.Attribute.BORDER_STYLE] = 'DOTTED';
     cell.setAttributes(attributes);
   }
 
