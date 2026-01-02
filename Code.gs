@@ -49,6 +49,9 @@ function createLabelsDoc(options) {
   var textSize = Number(options && options.textSize) || 12;
   var lineSpacing = Number(options && options.lineSpacing) || 4;
   var lineBreaks = options && options.lineBreaks !== false;
+  var columnsPerRow = Math.max(1, Number(options && options.columnsPerRow) || 1);
+  var labelPadding = Math.max(0, Number(options && options.labelPadding) || 8);
+  var labelSpacing = Math.max(0, Number(options && options.labelSpacing) || 0);
 
   var doc = DocumentApp.create('Labels - ' + sheet.getName());
   var body = doc.getBody();
@@ -58,19 +61,58 @@ function createLabelsDoc(options) {
   if (table.getNumRows() > 0) {
     table.removeRow(0);
   }
-  values.slice(1).forEach(function (row) {
+
+  function styleLabelCell(cell) {
+    cell.setPaddingTop(labelPadding);
+    cell.setPaddingBottom(labelPadding);
+    cell.setPaddingLeft(labelPadding);
+    cell.setPaddingRight(labelPadding);
+    cell.setBorderColor('#bdbdbd');
+    cell.setBorderWidth(1);
+    cell.setBorderStyle(DocumentApp.BorderStyle.DOTTED);
+  }
+
+  function styleSpacerCell(cell) {
+    cell.setPaddingTop(0);
+    cell.setPaddingBottom(0);
+    cell.setPaddingLeft(0);
+    cell.setPaddingRight(0);
+    cell.setBorderWidth(0);
+    cell.setBorderColor('#ffffff');
+    cell.clear();
+    if (labelSpacing > 0) {
+      cell.setWidth(labelSpacing);
+    }
+  }
+
+  var totalColumns = columnsPerRow + (labelSpacing > 0 ? columnsPerRow - 1 : 0);
+  var currentRow = null;
+
+  values.slice(1).forEach(function (row, rowIndex) {
     var rowValues = orderedHeaders.map(function (header) {
       var index = headerIndex[header];
       return index === undefined ? '' : row[index];
     });
-    var labelRow = table.appendTableRow();
-    labelRow.setMinimumHeight(72);
-    var cell = labelRow.appendTableCell();
+    var positionInRow = rowIndex % columnsPerRow;
+    if (positionInRow === 0) {
+      if (labelSpacing > 0 && rowIndex > 0) {
+        var spacerRow = table.appendTableRow();
+        for (var spacerIndex = 0; spacerIndex < totalColumns; spacerIndex += 1) {
+          styleSpacerCell(spacerRow.appendTableCell());
+        }
+        spacerRow.setMinimumHeight(labelSpacing);
+      }
+      currentRow = table.appendTableRow();
+      for (var cellIndex = 0; cellIndex < totalColumns; cellIndex += 1) {
+        currentRow.appendTableCell('');
+      }
+      currentRow.setMinimumHeight(72);
+    }
+
+    var cellPosition = positionInRow * (labelSpacing > 0 ? 2 : 1);
+    var cell = currentRow.getCell(cellPosition);
     cell.clear();
-    cell.setPaddingTop(8);
-    cell.setPaddingBottom(8);
-    cell.setPaddingLeft(8);
-    cell.setPaddingRight(8);
+    styleLabelCell(cell);
 
     if (lineBreaks) {
       rowValues.forEach(function (value, index) {
@@ -84,6 +126,11 @@ function createLabelsDoc(options) {
       paragraph.setFontFamily('Arial');
       paragraph.setFontSize(textSize);
       paragraph.setSpacingAfter(0);
+    }
+
+    if (labelSpacing > 0 && cellPosition + 1 < totalColumns) {
+      var spacerCell = currentRow.getCell(cellPosition + 1);
+      styleSpacerCell(spacerCell);
     }
   });
 

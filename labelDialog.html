@@ -123,6 +123,18 @@
             <input type="number" id="line-spacing" min="0" max="20" value="4">
             Line spacing (px)
           </label>
+          <label class="checkbox-item">
+            <input type="number" id="columns-per-row" min="1" max="6" value="1">
+            Columns per row
+          </label>
+          <label class="checkbox-item">
+            <input type="number" id="label-padding" min="0" max="40" value="8">
+            Label padding (px)
+          </label>
+          <label class="checkbox-item">
+            <input type="number" id="label-spacing" min="0" max="40" value="0">
+            Label spacing (px)
+          </label>
         </div>
         <div>
           <div><strong>Field order</strong></div>
@@ -156,6 +168,9 @@
         lineBreaks: true,
         textSize: 12,
         lineSpacing: 4,
+        columnsPerRow: 1,
+        labelPadding: 8,
+        labelSpacing: 0,
       };
 
       const columnsList = document.getElementById('columns-list');
@@ -167,6 +182,9 @@
       const lineBreaksInput = document.getElementById('line-breaks');
       const textSizeInput = document.getElementById('text-size');
       const lineSpacingInput = document.getElementById('line-spacing');
+      const columnsPerRowInput = document.getElementById('columns-per-row');
+      const labelPaddingInput = document.getElementById('label-padding');
+      const labelSpacingInput = document.getElementById('label-spacing');
 
       function renderColumns() {
         columnsList.innerHTML = '';
@@ -278,6 +296,9 @@
         state.lineBreaks = lineBreaksInput.checked;
         state.textSize = Number(textSizeInput.value) || 12;
         state.lineSpacing = Number(lineSpacingInput.value) || 4;
+        state.columnsPerRow = Math.max(1, Number(columnsPerRowInput.value) || 1);
+        state.labelPadding = Math.max(0, Number(labelPaddingInput.value) || 0);
+        state.labelSpacing = Math.max(0, Number(labelSpacingInput.value) || 0);
         renderPreview();
       }
 
@@ -306,6 +327,9 @@
             lineBreaks: state.lineBreaks,
             textSize: state.textSize,
             lineSpacing: state.lineSpacing,
+            columnsPerRow: state.columnsPerRow,
+            labelPadding: state.labelPadding,
+            labelSpacing: state.labelSpacing,
           });
       }
 
@@ -328,6 +352,9 @@
       lineBreaksInput.addEventListener('change', applyLayoutControls);
       textSizeInput.addEventListener('input', applyLayoutControls);
       lineSpacingInput.addEventListener('input', applyLayoutControls);
+      columnsPerRowInput.addEventListener('input', applyLayoutControls);
+      labelPaddingInput.addEventListener('input', applyLayoutControls);
+      labelSpacingInput.addEventListener('input', applyLayoutControls);
       createButton.addEventListener('click', buildLabelsDoc);
 
       loadHeaders();
