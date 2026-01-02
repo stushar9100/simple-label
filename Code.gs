@@ -67,9 +67,11 @@ function createLabelsDoc(options) {
     cell.setPaddingBottom(labelPadding);
     cell.setPaddingLeft(labelPadding);
     cell.setPaddingRight(labelPadding);
-    cell.setBorderColor('#bdbdbd');
     cell.setBorderWidth(1);
     cell.setBorderStyle(DocumentApp.BorderStyle.DOTTED);
+    var attributes = {};
+    attributes[DocumentApp.Attribute.BORDER_COLOR] = '#bdbdbd';
+    cell.setAttributes(attributes);
   }
 
   function styleSpacerCell(cell) {
@@ -78,7 +80,6 @@ function createLabelsDoc(options) {
     cell.setPaddingLeft(0);
     cell.setPaddingRight(0);
     cell.setBorderWidth(0);
-    cell.setBorderColor('#ffffff');
     cell.clear();
     if (labelSpacing > 0) {
       cell.setWidth(labelSpacing);
