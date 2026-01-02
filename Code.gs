@@ -67,10 +67,10 @@ function createLabelsDoc(options) {
     cell.setPaddingBottom(labelPadding);
     cell.setPaddingLeft(labelPadding);
     cell.setPaddingRight(labelPadding);
-    cell.setBorderWidth(1);
-    cell.setBorderStyle(DocumentApp.BorderStyle.DOTTED);
     var attributes = {};
     attributes[DocumentApp.Attribute.BORDER_COLOR] = '#bdbdbd';
+    attributes[DocumentApp.Attribute.BORDER_WIDTH] = 1;
+    attributes[DocumentApp.Attribute.BORDER_STYLE] = DocumentApp.BorderStyle.DOTTED;
     cell.setAttributes(attributes);
   }
 
@@ -79,7 +79,10 @@ function createLabelsDoc(options) {
     cell.setPaddingBottom(0);
     cell.setPaddingLeft(0);
     cell.setPaddingRight(0);
-    cell.setBorderWidth(0);
+    cell.setAttributes({
+      [DocumentApp.Attribute.BORDER_WIDTH]: 0,
+      [DocumentApp.Attribute.BORDER_COLOR]: '#ffffff'
+    });
     cell.clear();
     if (labelSpacing > 0) {
       cell.setWidth(labelSpacing);
