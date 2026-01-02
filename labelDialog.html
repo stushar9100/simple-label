@@ -37,6 +37,65 @@
         background: #fff;
         color: #1a73e8;
       }
+      .checkbox-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 8px 16px;
+        margin-top: 8px;
+      }
+      .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .controls {
+        display: grid;
+        gap: 12px;
+        margin-top: 8px;
+      }
+      .control-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 16px;
+      }
+      .order-list {
+        list-style: none;
+        padding: 0;
+        margin: 8px 0 0;
+        display: grid;
+        gap: 8px;
+      }
+      .order-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid #dadce0;
+        border-radius: 6px;
+        padding: 6px 8px;
+        background: #fff;
+      }
+      .order-actions {
+        display: flex;
+        gap: 4px;
+      }
+      .order-actions button {
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid #dadce0;
+        background: #f8f9fa;
+        color: #3c4043;
+      }
+      .preview {
+        border: 1px dashed #dadce0;
+        border-radius: 6px;
+        padding: 12px;
+        background: #fafafa;
+        min-height: 80px;
+      }
+      .preview-line {
+        margin: 0;
+      }
     </style>
   </head>
   <body>
@@ -44,12 +103,37 @@
 
     <div class="section">
       <strong>1. Select columns for the label</strong>
-      <p class="placeholder">Column selection controls will appear here in the next phase.</p>
+      <div id="columns-loading" class="placeholder">Loading columns from the sheet…</div>
+      <div id="columns-list" class="checkbox-list" aria-live="polite"></div>
     </div>
 
     <div class="section">
       <strong>2. Arrange label layout</strong>
-      <p class="placeholder">Layout options and preview will appear here in the next phase.</p>
+      <div class="controls">
+        <div class="control-row">
+          <label class="checkbox-item">
+            <input type="checkbox" id="line-breaks" checked>
+            Line break between fields
+          </label>
+          <label class="checkbox-item">
+            <input type="number" id="text-size" min="8" max="30" value="12">
+            Text size (pt)
+          </label>
+          <label class="checkbox-item">
+            <input type="number" id="line-spacing" min="0" max="20" value="4">
+            Line spacing (px)
+          </label>
+        </div>
+        <div>
+          <div><strong>Field order</strong></div>
+          <div class="placeholder">Use the arrows to reorder selected fields.</div>
+          <ul id="order-list" class="order-list"></ul>
+        </div>
+        <div>
+          <div><strong>Preview</strong></div>
+          <div id="preview" class="preview"></div>
+        </div>
+      </div>
     </div>
 
     <div class="section">
@@ -61,5 +145,157 @@
       <button class="secondary" onclick="google.script.host.close()">Close</button>
       <button disabled>Create</button>
     </div>
+
+    <script>
+      const state = {
+        headers: [],
+        selected: new Set(),
+        order: [],
+        lineBreaks: true,
+        textSize: 12,
+        lineSpacing: 4,
+      };
+
+      const columnsList = document.getElementById('columns-list');
+      const columnsLoading = document.getElementById('columns-loading');
+      const orderList = document.getElementById('order-list');
+      const preview = document.getElementById('preview');
+      const lineBreaksInput = document.getElementById('line-breaks');
+      const textSizeInput = document.getElementById('text-size');
+      const lineSpacingInput = document.getElementById('line-spacing');
+
+      function renderColumns() {
+        columnsList.innerHTML = '';
+        if (state.headers.length === 0) {
+          columnsList.innerHTML = '<div class="placeholder">No headers found.</div>';
+          return;
+        }
+        state.headers.forEach((header) => {
+          const item = document.createElement('label');
+          item.className = 'checkbox-item';
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.value = header;
+          checkbox.checked = state.selected.has(header);
+          checkbox.addEventListener('change', () => toggleSelection(header, checkbox.checked));
+          item.appendChild(checkbox);
+          item.appendChild(document.createTextNode(header));
+          columnsList.appendChild(item);
+        });
+      }
+
+      function toggleSelection(header, isSelected) {
+        if (isSelected) {
+          state.selected.add(header);
+          if (!state.order.includes(header)) {
+            state.order.push(header);
+          }
+        } else {
+          state.selected.delete(header);
+          state.order = state.order.filter((item) => item !== header);
+        }
+        renderOrder();
+        renderPreview();
+      }
+
+      function moveOrder(index, direction) {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= state.order.length) {
+          return;
+        }
+        const updated = [...state.order];
+        const [item] = updated.splice(index, 1);
+        updated.splice(newIndex, 0, item);
+        state.order = updated;
+        renderOrder();
+        renderPreview();
+      }
+
+      function renderOrder() {
+        orderList.innerHTML = '';
+        if (state.order.length === 0) {
+          orderList.innerHTML = '<li class="placeholder">Select columns to define order.</li>';
+          return;
+        }
+        state.order.forEach((header, index) => {
+          const listItem = document.createElement('li');
+          listItem.className = 'order-item';
+          const label = document.createElement('span');
+          label.textContent = header;
+          const actions = document.createElement('div');
+          actions.className = 'order-actions';
+          const upButton = document.createElement('button');
+          upButton.type = 'button';
+          upButton.textContent = '↑';
+          upButton.disabled = index === 0;
+          upButton.addEventListener('click', () => moveOrder(index, -1));
+          const downButton = document.createElement('button');
+          downButton.type = 'button';
+          downButton.textContent = '↓';
+          downButton.disabled = index === state.order.length - 1;
+          downButton.addEventListener('click', () => moveOrder(index, 1));
+          actions.appendChild(upButton);
+          actions.appendChild(downButton);
+          listItem.appendChild(label);
+          listItem.appendChild(actions);
+          orderList.appendChild(listItem);
+        });
+      }
+
+      function renderPreview() {
+        preview.innerHTML = '';
+        if (state.order.length === 0) {
+          preview.innerHTML = '<div class="placeholder">Preview will appear once fields are selected.</div>';
+          return;
+        }
+        const style = `font-size: ${state.textSize}px; margin-bottom: ${state.lineSpacing}px;`;
+        if (state.lineBreaks) {
+          state.order.forEach((header, index) => {
+            const line = document.createElement('p');
+            line.className = 'preview-line';
+            line.style = style;
+            line.textContent = header;
+            if (index === state.order.length - 1) {
+              line.style.marginBottom = '0';
+            }
+            preview.appendChild(line);
+          });
+        } else {
+          const line = document.createElement('p');
+          line.className = 'preview-line';
+          line.style = style;
+          line.textContent = state.order.join(' • ');
+          preview.appendChild(line);
+        }
+      }
+
+      function applyLayoutControls() {
+        state.lineBreaks = lineBreaksInput.checked;
+        state.textSize = Number(textSizeInput.value) || 12;
+        state.lineSpacing = Number(lineSpacingInput.value) || 4;
+        renderPreview();
+      }
+
+      function loadHeaders() {
+        google.script.run
+          .withSuccessHandler((headers) => {
+            state.headers = headers || [];
+            columnsLoading.style.display = 'none';
+            renderColumns();
+            renderOrder();
+            renderPreview();
+          })
+          .withFailureHandler(() => {
+            columnsLoading.textContent = 'Unable to load headers.';
+          })
+          .getSheetHeaders();
+      }
+
+      lineBreaksInput.addEventListener('change', applyLayoutControls);
+      textSizeInput.addEventListener('input', applyLayoutControls);
+      lineSpacingInput.addEventListener('input', applyLayoutControls);
+
+      loadHeaders();
+    </script>
   </body>
 </html>
